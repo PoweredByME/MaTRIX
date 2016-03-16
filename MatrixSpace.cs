@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace MatrixSpace
 {
@@ -8,17 +9,27 @@ namespace MatrixSpace
 		protected int mRows, mCols;
 		private OperationsClass theOperations =  new OperationsClass();
 		private static OperationsClass staticOperations =  new OperationsClass();
+		private string tag;
+
+		public Matrix(string thetag, double[,] matrix,int row = 1, int column = 1 )
+		{
+			mRows = row;mCols = column;
+			theMatrix = matrix;
+			tag = thetag;
+		}
 
 		public Matrix(int rows = 01, int columns = 01)
 		{
 			mRows = rows; mCols = columns;
 			theMatrix = new double[mRows, mCols];
+			tag = " ";
 		}
 
 		public Matrix(double[,] mat, int rows , int cols)
 		{
 			mRows = rows; mCols = cols;
 			theMatrix = mat;
+			tag = " ";
 		}
 
 		public void consoleStepInput()
@@ -30,6 +41,7 @@ namespace MatrixSpace
 
 		public void consoleOutput()
 		{
+			Console.WriteLine ("{0} = ", tag);
 			consoleMatrixOutput output = new consoleMatrixOutput (theMatrix, mRows, mCols);
 			output.getOutput ();
 		}
@@ -55,6 +67,8 @@ namespace MatrixSpace
 			}
 		}
 
+		public void setMatrixArray(double [,] mat){theMatrix = mat;}
+		public string getTag(){return tag;}
 		public Matrix getAdjoint(){return theOperations.getAdjoint (this);}
 		public Matrix getTranspose(){return theOperations.getTranspose (this);}
 		public double determinant(){return theOperations.getdetreminant (this);}
@@ -64,6 +78,7 @@ namespace MatrixSpace
 		public int getColumns(){return mCols;}
 		public double  getElement(int row, int col){return theMatrix [row-1, col-1];}
 		public double[,] getMatrixArray(){return theMatrix;}
+		public void setTag(string theMatTag) {tag = theMatTag;}
 		public void setElement(double number, int rows, int col){theMatrix [rows-1, col-1] = number;}
 		static public Matrix operator+(Matrix lhs, Matrix rhs){return staticOperations.addMatrix (lhs, rhs);}
 		static public Matrix operator-(Matrix lhs, Matrix rhs){return staticOperations.subtractMatrix (lhs, rhs);}
@@ -315,6 +330,187 @@ namespace MatrixSpace
 			}
 		}
 	}     //end class output
+
+	public class StringEnumerator{     //class for understanding the string 
+
+		private string expression;
+		private List<string> eBatch;
+		private List<Matrix> theMatrixList;
+		static private List<Expression> theExpressionList = new List<Expression>();
+		static int count = 0;
+		static int countExp = 0;
+		Matrix OutMat;
+		public StringEnumerator(string theExpression = " ") 
+		{
+			expression = theExpression;
+			eBatch = new List<string>();
+			theMatrixList = new List<Matrix> ();
+			OutMat = new Matrix (1, 1);
+			OutMat.Zero ();
+		}
+        
+		 public void PrintExpression()
+		{
+			Process ();
+			ExpressionPrinter e = new ExpressionPrinter (theExpressionList [count]);
+			e.Printer ();
+			count++;
+		}
+
+		public void setString(string newString){expression = newString;} 
+
+		public Matrix getMatrix()
+		{
+			Process ();
+			return OutMat;
+		}
+
+		public void Process()
+		{
+			if (string.IsNullOrWhiteSpace (expression)) { 
+				Console.WriteLine ("The string is empty");
+			} else if (ifContain (expression, "=") && ifContain (expression, "[") && ifContain (expression, "]") && !(ifContain(expression,"+")
+				&&ifContain(expression,"-"))) {
+				expression = expression.Trim ();
+				int lastCharacter = expression.IndexOf ("]");
+				int explenght = expression.Length;
+				if (explenght == lastCharacter + 1) {
+					OutMat = matrixWithTagProcess (expression);
+					theMatrixList.Add (OutMat);
+				} else
+					Console.WriteLine ("Incompatiable format... please write a compatible formate");
+			} else {
+				Console.WriteLine ("Unable to understand the given statement. Sorry. ");
+			}
+				
+		}
+
+		private bool ifContain(string myString, string toFind)
+		{
+			bool decision = false ;
+			decision = myString.Contains (toFind);
+			return decision;
+		}
+
+		/*This function interprets a given string in to a matrix with a tag*/
+		private Matrix matrixWithTagProcess(string exp)
+		{
+			int equalOccur = exp.IndexOf ("=");    //sees the position of the occurance of the "="
+			char[] characterArray = exp.ToCharArray ();   // converting exp into char array
+			char ender = characterArray [0];
+			int counter = 0;   //the counter and ender
+			string theMatrixTag = "";   // the dumy string to store a matrix tag.
+			while (ender != '=') {      // while loop to extract the tag of the matrix
+				theMatrixTag = theMatrixTag + ender.ToString ();  
+				counter++;
+				ender = characterArray [counter];
+			}       //end while loop to extract the tag.
+			theMatrixTag = theMatrixTag.Trim ();    //removes the unneeded spaces and things like that
+			string matrixString = exp.Substring (equalOccur + 1);  //extractes the matrix string form the given string.
+			matrixString = matrixString.Trim ();  // removes the exesscive spaces and things like this 
+			char[] matChar = matrixString.ToCharArray ();    
+			char endChar = '[';  
+			int count = 0;
+			string dumy = "";    
+			List<string> bat = new List<string> ();  //a list for every chunk of numbers
+			while (endChar != ']') { // while loop to extract the elements for the matrix 
+				count++;
+				endChar = matChar [count];
+				if (endChar != ']' && endChar != ' ' && endChar != ';') {  //neglecting uncessary things.
+					dumy += endChar;
+				} else if (endChar == ';') {  //transition for rows 
+					if (string.IsNullOrWhiteSpace (dumy) || string.IsNullOrEmpty (dumy)) {
+						dumy = "";
+						dumy += endChar;
+						bat.Add (dumy);
+						dumy = "";
+					} else {
+						bat.Add (dumy);
+						dumy = "";
+						dumy += endChar;
+						bat.Add (dumy);
+						dumy = "";
+					}
+				}      //end transition for rows.
+				else {
+					if (string.IsNullOrWhiteSpace (dumy) || string.IsNullOrEmpty (dumy))
+						dumy = "";
+					else {
+						bat.Add (dumy);
+						dumy = "";
+					}
+				}
+			}	   //end while loop to extract matrix elements.
+			int rows = 0, columns = 0; 
+			int greatest = 0;
+			foreach (string num in bat) {  //foreach loop to set the number of rows and columns
+				if (num == ";") {
+					if (greatest < columns) {
+						greatest = columns;
+					} 
+					columns = 0;
+					rows++;
+				} else
+					columns++;
+			}// end foreach loop.
+			if (columns > greatest)
+				greatest = columns;
+			if (greatest == 0)
+				greatest = columns;  // end of logic to set the matrix number of rows and columns
+			Matrix theMatrix = new Matrix (rows+1, greatest); //creation of the matrix.
+			theMatrix.Zero ();   //make the matrix zero
+			theMatrix.setTag (theMatrixTag);   //sets the tag of the matrix.
+			rows = 0; columns = 0;    //reinitialize the rows and columns after seting.
+			foreach(string num in bat){   //sets the matrix values
+				if (num == ";") {
+					rows++;
+					columns = 0;
+				} else {
+				theMatrix.setElement (double.Parse (num), rows+1, columns+1);
+					columns++;
+				}
+			}    // ends the matrix values setter
+			Expression mat = new Expression();
+			mat.setMatrix (theMatrix);
+			theExpressionList.Add(mat);
+			countExp++;
+			return theMatrix;		// returns the matrix after making it.
+		}     //end function to convert the string to the matrix.
+			
+
+	}          //end class StringEnumerator
+
+    class Expression{
+		protected Matrix theMatrix;
+		protected int expressionType = 0;
+	    
+		public int getExpressionType(){return expressionType;}
+		public Matrix getMatrix(){return theMatrix;}
+		public void setMatrix(Matrix incomingExp)
+		{
+			expressionType = 1;
+			theMatrix = incomingExp;
+		}
+	}
+
+	class ExpressionPrinter : Expression
+	{
+		private Expression exp =  new Expression();
+		private int expType = 0;
+		public ExpressionPrinter(Expression e){exp = e;}
+		private void setType()
+		{
+			expType = exp.getExpressionType ();
+		}
+		public void Printer()
+		{
+			setType ();
+			if (expType == 1) {
+				exp.getMatrix ().consoleOutput ();
+			}
+		}
+
+	}
 
 }
 

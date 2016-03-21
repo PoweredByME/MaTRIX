@@ -91,6 +91,9 @@ namespace MatrixSpace
 		static public Matrix operator+(Matrix lhs, Matrix rhs){return staticOperations.addMatrix (lhs, rhs);}
 		static public Matrix operator-(Matrix lhs, Matrix rhs){return staticOperations.subtractMatrix (lhs, rhs);}
 		static public Matrix operator*(Matrix lhs, Matrix rhs){return staticOperations.multiplyMatrix (lhs, rhs);}
+		static public Matrix operator*(Matrix lhs, double num){return staticOperations.mConst (lhs, num);}
+		static public Matrix operator*(double num, Matrix rhs){return staticOperations.mConst (rhs, num);}
+
 	}      //the basic matrix class ends
 
 	public class Number{      // the class for numeric numbers
@@ -132,6 +135,22 @@ namespace MatrixSpace
 
 	class OperationsClass     //start operations class
 	{
+		public Matrix mConst(Matrix mat, double num)
+		{
+			int r = mat.getRows ();
+			int c = mat.getColumns ();
+			double[,] m = mat.getMatrixArray ();
+			for(int c1 = 0 ; c1 < r ; c1++)
+			{
+				for (int c2 = 0; c2 < c; c2++) {
+					m[c1,c2]*=num;
+				}
+			}
+			Matrix ans = new Matrix (mat.getTag(),m, r, c);
+			return ans;
+		}
+
+
 		public Matrix addMatrix(Matrix mat, Matrix mat1)    //Matrix Addition
 		{ 
 			if (mat.getRows () == mat1.getRows () && mat.getColumns () == mat1.getColumns ()) {
@@ -380,7 +399,7 @@ namespace MatrixSpace
 		private string expression;
 		private List<string> eBatch;
 		private List<Matrix> theMatrixList;
-		static private List<Expression> theExpressionList = new List<Expression>();
+	    private List<Expression> theExpressionList = new List<Expression>();
 		static int count = 0;
 		static int countExp = 0;
 		string errorMessage = "";
@@ -534,7 +553,8 @@ namespace MatrixSpace
 		{
 			EquationSolvingSpace.DMAS_Solver sol = new EquationSolvingSpace.DMAS_Solver (theExpressionList, rhs);
 			string dumy = "";
-			if (sol.getSolution ().getExpressionType () != 2) {
+			Expression solve = sol.getSolution ();
+			if (solve.getExpressionType () != 2 && solve.getExpressionType() != 0) {
 				foreach (char x in lhs) {
 					if (x == '+' || x == '-' || x == '(' || x == '/' || x == '*' || x == ')') {
 						dumy = dumy.Trim ();
@@ -552,26 +572,39 @@ namespace MatrixSpace
 					eBatch.Add (dumy);
 				}
             
-				if (eBatch.Count != 1) {
+				if (eBatch.Count != 1 || isNumeric(eBatch[0])) {
 					Expression error = new Expression ();
 					if (eBatch.Count > 1)
 						error.setErrorMessage ("Invalid form of equation entered. You must enter only one variable on the LEFT HAND SIDE.");
 					else if (eBatch.Count < 1)
 						error.setErrorMessage ("Invalid form of equation entered. You must enter only one variable name on the RIGHT HAND SIDE.");
+					if (isNumeric (eBatch [0]))
+						error.setErrorMessage ("A Number cannot be on the LEFT HAND SIDE.");
 					theExpressionList.Add (error);
 				} else {
-					if (theExpressionList.Contains (getExpression (lhs))) {
-						Expression n = new Expression (sol.getSolution ());
-						n.setTag (lhs);
-						if (n.getExpressionType () == 1)
-							n.getMatrix ().setTag (lhs);
-						else if (n.getExpressionType () == 3)
-							n.getNumberExpression ().setTag (lhs);
-						theExpressionList [theExpressionList.IndexOf (getExpression (lhs))].setExpression (n);
-						Expression Alert = new Expression ();
-						Alert.setAlertMessage ("The variable on the left hand side has been updates.");
-						theExpressionList.Add (Alert);
-						Console.WriteLine ("SOLVED!!!");
+					if (theExpressionList.Contains (getExpression (lhs.Trim()))) {
+						if (solve.getExpressionType () == 1) {
+							solve.getMatrix ().setTag (lhs);
+							theExpressionList[theExpressionList.IndexOf(getExpression(lhs))].setMatrix(solve.getMatrix());
+							Expression a = new Expression ();
+							a.setAlertMessage ("SOLVED!!!");
+							theExpressionList.Add (a);
+						} else if (solve.getExpressionType () == 3) {
+							solve.getNumberExpression ().setTag (lhs);
+							theExpressionList[theExpressionList.IndexOf(getExpression(lhs))].setNumberExpression(solve.getNumberExpression());
+							Expression a = new Expression ();
+							a.setAlertMessage ("SOLVED!!!");
+							theExpressionList.Add (a);
+						}
+						if (solve.getExpressionType () != 0 && solve.getExpressionType()!=2) {
+							Expression Alert = new Expression ();
+							Alert.setAlertMessage ("The variable on the left hand side has been updates.");
+							theExpressionList.Add (Alert);
+						} else {
+							Expression err = new Expression ();
+							err.setErrorMessage ("Undefined variables entered on RIGHT HAND SIDE are UNDEFINED.");
+							theExpressionList.Add (err);
+						}
 					} else {
 						Expression n = new Expression (sol.getSolution ());
 						n.setTag (lhs);
@@ -583,12 +616,14 @@ namespace MatrixSpace
 						Console.WriteLine ("SOLVED!!!");
 					}
 				}
-				eBatch.RemoveRange (0, eBatch.Count);
+			
 			} else {
 				Expression error = new Expression ();
 				error.setErrorMessage ("The variables entered on the RIGHT HAND SIDE may be undefined.");
 				theExpressionList.Add (error);
 			}
+			eBatch.RemoveRange (0, eBatch.Count);
+
 
 		}
 
@@ -886,7 +921,7 @@ namespace MatrixSpace
 									}
 								}
 								if (!f) {      // if the variable doesnot exist. 
-									Console.WriteLine ("The variable does not exist, currently.");
+									Console.WriteLine ("The variable does not exist, currently. OR the operation you are trying perform is not valid.");
 								}
 							}
 							else {
@@ -1147,26 +1182,26 @@ namespace MatrixSpace
 
 		public void setNumberExpression( Number incomingExp)
 		{
-			setTag (incomingExp.getTag ());
+			tag = (incomingExp.getTag ());
 			expressionType = 3;
 			numberExpression = incomingExp;
 		}
 		public void setMatrix(Matrix incomingExp)
 		{
-			setTag (incomingExp.getTag ());
+			tag  = incomingExp.getTag ();
 			expressionType = 1;
 			theMatrix = incomingExp;
 		}
 		public void setErrorMessage(string incomingMessage)
 		{
-			setTag ("ErrorMessage");
+			tag = ("ErrorMessage");
 			expressionType = 2;
 			theErrorMessage = incomingMessage;
 		}
 
 		public void setAlertMessage(string incomingExp)
 		{
-			setTag ("AlertMessage");
+			tag =("AlertMessage");
 			expressionType = 2;
 			theErrorMessage = incomingExp;
 		}

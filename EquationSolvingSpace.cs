@@ -66,9 +66,15 @@ namespace EquationSolvingSpace
 			Expression sol = new Expression ();
 			eBatchMaker ();
 			if (allPresent ()) {
-				if (DMAS_Addition ()) {
-					sol = getExpression (eBatch [0]);
-				} else {
+							if (DMAS_Multpilication ()) {
+					if (DMAS_Addition ()) {
+						sol = getExpression (eBatch [0].TrimStart(new char[]{'-'}));
+					} else {
+						Expression x = new Expression ();
+						x.setErrorMessage ("Invalid operation.");
+						sol = x;
+					}
+				}else {
 					Expression x = new Expression ();
 					x.setErrorMessage ("Invalid operation.");
 					sol = x;
@@ -153,6 +159,7 @@ namespace EquationSolvingSpace
 				dumy.Trim();
 				eBatch.Add(dumy);
 			}
+			eBatchUnnamedManager ();
 			bool h = eBatchManager ();
 			bool h1 = eBatchMinusManager ();
 			if (h || h1) {
@@ -179,15 +186,33 @@ namespace EquationSolvingSpace
 					}
 				}
 			}
-			foreach (int e in p) {
+			for (int c = p.Count-1; c >= 0; c--) {
+				int e = p [c];
 				eBatch.RemoveAt (e);
 			}
 			return occured;
 		}
 
+		private void eBatchUnnamedManager()
+		{
+			for(int c = 0; c < eBatch.Count ; c++) {
+				string x = eBatch[c];
+				if (isNumeric (x)) {
+					Number n = new Number ();
+					n.setTag ("Nnew_restricted_ab_oxfff" + SAcounter);
+					n.setNumber (double.Parse (x));
+					Expression n1 = new Expression ();
+					n1.setNumberExpression (n);
+					theExpressionList.Add (n1);
+					eBatch [c] = "Nnew_restricted_ab_oxfff" + SAcounter;
+					SAcounter++;
+				}
+			}
+		}
+
 		private bool eBatchMinusManager()
 		{
-			bool occured = false;
+		bool occured = false;
 			List<int> d = new List<int> ();
 			for (int c = 0; c < eBatch.Count; c++) {
 				string x = eBatch [c];
@@ -200,8 +225,9 @@ namespace EquationSolvingSpace
 					}
 				}
 			}
-			foreach (int x in d) {
-				eBatch.RemoveAt (x);
+			for (int c = d.Count-1; c >= 0; c--) {
+				int e = d [c];
+				eBatch.RemoveAt (e);
 			}
 			for (int c = 0; c < eBatch.Count; c++) {
 				string x = eBatch [c];
@@ -252,28 +278,12 @@ namespace EquationSolvingSpace
 				if (x == "+") {
 					string left = eBatch [c - 1];
 					string right = eBatch [c + 1];
-					if (isNumeric (left.TrimStart (new char[]{ '-' })) && !theExpressionList.Contains(getExpression(left.TrimStart(new char [] {'-'})))) {
-						Number a1 = new Number ();
-						a1.setTag (left.TrimStart(new char[]{'-'}));
-						a1.setNumber (double.Parse(left.TrimStart(new char[]{'-'})));
-						Expression x22 = new Expression ();
-						x22.setNumberExpression (a1);
-						theExpressionList.Add (x22);
-					}
-					if (isNumeric (right.TrimStart (new char[]{ '-' }))&& !theExpressionList.Contains(getExpression(right.TrimStart(new char [] {'-'})))) {
-						Number a1 = new Number ();
-						a1.setTag (right.TrimStart(new char[]{'-'}));
-						a1.setNumber (double.Parse(right.TrimStart(new char[]{'-'})));
-						Expression x22 = new Expression ();
-						x22.setNumberExpression (a1);
-						theExpressionList.Add (x22);
-					}
 					Expression lhs = getExpression (eBatch [c - 1].TrimStart(new char[]{'-'}));
 					Expression rhs = getExpression (eBatch [c + 1].TrimStart(new char[]{'-'}));
 					int lhsType = lhs.getExpressionType ();
 					int rhsType = rhs.getExpressionType ();
 					bool yeal = false;bool year = false;
-					if (lhsType == rhsType || isNumeric(left.TrimStart (new char[]{'-'})) || isNumeric(right.TrimStart (new char[]{'-'}))) {
+					if (lhsType == rhsType) {
 						if (lhsType == 1 && rhsType==1) {
 							if (lhs.getMatrix ().getColumns () == rhs.getMatrix ().getColumns () && lhs.getMatrix ().getRows () == rhs.getMatrix ().getRows ()) {
 								Matrix LHS = lhs.getMatrix ();
@@ -361,123 +371,148 @@ namespace EquationSolvingSpace
 
 		}     //end funciton of addition.
 
+	    int SAcounter = 0;
 	
-
-		private bool DMAS_Subtraction()
+		private bool DMAS_Multpilication()     //function for multiplication 
 		{
-			bool okay = true;
-			int count = 0;
-			int size = eBatch.Count;
-			while (size > 1) {
-				if (eBatch.Count <= 1) {
-					break;
-				}
-				string x = eBatch [count];
-				if (x == "-") {
-					string left = new string (eBatch [count - 1].ToCharArray());
-					string right = new string (eBatch [count + 1].ToCharArray());
-					if (right == "-") {
-						okay = false;
+				bool okay = true;
+				int c = 0;
+				int size = eBatch.Count;
+				while ((size>1)) {
+					if (c == eBatch.Count)
 						break;
-					} else {
-						if (isNumeric (left.TrimStart (new char[]{ '-' })) && !theExpressionList.Contains(getExpression(left.TrimStart(new char[]{'-'})))) {
-							Expression a = new Expression ();
-							Number a1 = new Number ();
-							a1.setTag (left.TrimStart (new char[] { '-' }));
-							a1.setNumber (double.Parse (left.TrimStart (new char[]{ '-' })));
-							a.setNumberExpression (a1);
-							theExpressionList.Add (a);
-						}
-						if (isNumeric (right.TrimStart (new char []{ '-' })) && !theExpressionList.Contains (getExpression (right.TrimStart (new char[]{ '-' })))) {
-							Expression a = new Expression ();
-							Number a1 = new Number ();
-							a1.setTag (right.TrimStart (new char[]{ '-' }));
-							a1.setNumber (double.Parse (right.TrimStart (new char[]{ '-' })));
-							theExpressionList.Add (a); 
-						}
-						int lhsType = getExpression (left.TrimStart (new char[] { '-' })).getExpressionType ();
-						int rhsType = getExpression (right.TrimStart (new char[] { '-' })).getExpressionType ();
-						Expression lhs = getExpression (eBatch [count - 1].TrimStart(new char[]{'-'}));
-						Expression rhs = getExpression (eBatch [count + 1].TrimStart(new char[]{'-'}));
+					string x = eBatch [c].Trim();
+					if (eBatch.Count <= 1)
+						break;
+					if (x == "*") {
+						string left = eBatch [c - 1];
+						string right = eBatch [c + 1];
+						Expression lhs = getExpression (eBatch [c - 1].TrimStart(new char[]{'-'}));
+						Expression rhs = getExpression (eBatch [c + 1].TrimStart(new char[]{'-'}));
+						int lhsType = lhs.getExpressionType ();
+						int rhsType = rhs.getExpressionType ();
 						bool yeal = false;bool year = false;
-						if (lhsType == rhsType || isNumeric (left.TrimStart (new char[]{ '-' })) || isNumeric (right.TrimStart (new char[]{ '-' }))) {
-							if (lhsType == 1 && rhsType == 1) {
+						if (lhsType == rhsType || lhsType!=rhsType) {
+							if (lhsType == 1 && rhsType==1) {
 								if (lhs.getMatrix ().getColumns () == rhs.getMatrix ().getColumns () && lhs.getMatrix ().getRows () == rhs.getMatrix ().getRows ()) {
 									Matrix LHS = lhs.getMatrix ();
 									Matrix RHS = rhs.getMatrix ();
 									if (left.Contains ("-")) {
 										LHS = LHS * (-1);
-										eBatch [count - 1] = eBatch [count - 1].TrimStart (new char[]{ '-' });
+										eBatch [c - 1] = eBatch [c - 1].TrimStart (new char[]{'-'});
 										yeal = true;
 									}
 									if (right.Contains ("-")) {
 										RHS = RHS * (-1);
-										eBatch [count + 1] = eBatch [count + 1].TrimStart (new char[]{ '-' });
+										eBatch [c + 1] = eBatch [c + 1].TrimStart (new char[]{'-'});
 										year = true;
 									}
-									Matrix sum = LHS - RHS;
-									if (yeal)
+									Matrix sum = LHS * RHS;
+									if(yeal)
 										LHS = LHS * (-1);
-									if (year)
+									if(year)
 										RHS = RHS * (-1);
 									sum.setTag (lhs.getTag ());
 									theExpressionList [theExpressionList.IndexOf ((lhs))].setMatrix (sum);
-									eBatch.RemoveAt (count + 1);
-									eBatch.RemoveAt (count);
+									eBatch.RemoveAt (c+1);
+									eBatch.RemoveAt (c);
 								} else {
 									PrintAbles.PrintError ("Invalid Operation");
 									okay = false;
 									break;
 								}
-							} else if (rhsType == 3 || isNumeric (left.TrimStart (new char[]{ '-' })) || isNumeric (right.TrimStart (new char[]{ '-' }))) {
+							} 
+						else if(lhsType == 3 && rhsType== 1){
+							double LHS = lhs.getNumberExpression ().getNumber ();
+							Matrix RHS = rhs.getMatrix ();
+							bool yes = false; 
+							if (left.Contains ("-")) {
+								LHS = LHS * (-1);
+							}
+							if (right.Contains ("-")) {
+								RHS = RHS * (-1);
+								yes = true;
+							}
+							Matrix ans = LHS * RHS;
+							if (yes)
+								RHS = RHS * (-1);
+							ans.setTag (left.TrimStart(new char []{'-'}));
+							theExpressionList [theExpressionList.IndexOf (lhs)].setMatrix (ans);
+							eBatch.RemoveAt (c+1);
+							eBatch.RemoveAt (c);
+						}
+						else if(lhsType == 1 && rhsType== 3){
+							double RHS = rhs.getNumberExpression ().getNumber ();
+							Matrix LHS = lhs.getMatrix ();
+							bool yes = false; 
+							if (right.Contains ("-")) {
+								RHS = RHS * (-1);
+							}
+							if (left.Contains ("-")) {
+								LHS = LHS * (-1);
+								yes = true;
+							}
+							Matrix ans = LHS * RHS;
+							if (yes)
+								LHS = LHS * (-1);
+							ans.setTag (left.TrimStart(new char []{'-'}));
+							theExpressionList [theExpressionList.IndexOf (lhs)].setMatrix (ans);
+							eBatch.RemoveAt (c+1);
+							eBatch.RemoveAt (c);
+						}
+						else if (rhsType == 3 ||isNumeric(left.TrimStart (new char[]{'-'})) ||isNumeric(right.TrimStart (new char[]{'-'}))) {
 								double LHS = 0, RHS = 0;
-								if (isNumeric (left.TrimStart (new char[]{ '-' }))) {
+								if (isNumeric (left.TrimStart (new char[]{'-'}))) {
 									LHS = double.Parse (left.TrimStart (new char[]{ '-' }));
-								} else
+								}
+								else 
 									LHS = lhs.getNumberExpression ().getNumber ();
-								if (isNumeric (right.TrimStart (new char[]{ '-' }))) {
+								if (isNumeric (right.TrimStart (new char[]{'-'}))) {
 									RHS = double.Parse (right.TrimStart (new char[]{ '-' }));
-								} else
+								}
+								else
 									RHS = rhs.getNumberExpression ().getNumber ();
 								if (left.Contains ("-")) {
 									LHS = LHS * (-1);
-									eBatch [count - 1] = eBatch [count - 1].TrimStart (new char[]{ '-' });
+									eBatch [c - 1] = eBatch [c - 1].TrimStart (new char[]{'-'});
 								}
 								if (right.Contains ("-")) {
 									RHS = RHS * (-1);
-									eBatch [count + 1] = eBatch [count + 1].TrimStart (new char[]{ '-' });
+									eBatch [c + 1] = eBatch [c + 1].TrimStart (new char[]{'-'});
 								}
-								double num = LHS - RHS;
-								bool go = true;
+								double num = LHS * RHS;
+								bool go =true;
 								Number sum = new Number ();
 								if (isNumeric (left.TrimStart (new char[]{ '-' })) && isNumeric (right.TrimStart (new char[]{ '-' }))) {
 									sum.setTag (num.ToString ());
-									eBatch [count - 1] = num.ToString ();
+									eBatch [c - 1] = num.ToString ();
 									go = false;
 								} else if (isNumeric (left.TrimStart (new char[]{ '-' })) && go) {
 									sum.setTag (num.ToString ());
-									eBatch [count - 1] = num.ToString ();
+									eBatch [c - 1] = num.ToString ();
 								} else {
-									sum.setTag (eBatch [count - 1]);
+									sum.setTag (eBatch [c - 1]);
 								}
 								sum.setNumber (num);
 								theExpressionList [theExpressionList.IndexOf ((lhs))].setNumberExpression (sum);
-								eBatch.RemoveAt (count + 1);
-								eBatch.RemoveAt (count);
+								eBatch.RemoveAt (c+1);
+								eBatch.RemoveAt (c);
 							}  
-						} else {
-							okay = false;
-							break;
 						}
+
+					c = 0;
+					} 
+
+					else{
+						size = eBatch.Count;
+						c += 1;
 					}
-					count = 0;
+
+
 				}
-				count++;
-			}
-			return okay;
-		}
+				return okay; 
 
-
+		}   //function for multiplication ends
 
 
 

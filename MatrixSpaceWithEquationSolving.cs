@@ -582,29 +582,30 @@ namespace MatrixSpace
 						error.setErrorMessage ("A Number cannot be on the LEFT HAND SIDE.");
 					theExpressionList.Add (error);
 				} else {
+					
 					if (theExpressionList.Contains (getExpression (lhs.Trim()))) {
 						if (solve.getExpressionType () == 1) {
 							solve.getMatrix ().setTag (lhs);
 							theExpressionList[theExpressionList.IndexOf(getExpression(lhs))].setMatrix(solve.getMatrix());
 							Expression a = new Expression ();
-							a.setAlertMessage ("SOLVED!!!");
+							a.setAlertMessage ("SOLVED!!!The variable on the left hand side has been updated.");
 							theExpressionList.Add (a);
 						} else if (solve.getExpressionType () == 3) {
 							solve.getNumberExpression ().setTag (lhs);
 							theExpressionList[theExpressionList.IndexOf(getExpression(lhs))].setNumberExpression(solve.getNumberExpression());
 							Expression a = new Expression ();
-							a.setAlertMessage ("SOLVED!!!");
+							a.setAlertMessage ("SOLVED!!!The variable on the left hand side has been updated.");
 							theExpressionList.Add (a);
 						}
-						if (solve.getExpressionType () != 0 && solve.getExpressionType()!=2) {
-							Expression Alert = new Expression ();
-							Alert.setAlertMessage ("The variable on the left hand side has been updates.");
-							theExpressionList.Add (Alert);
-						} else {
+						if (!(solve.getExpressionType () != 0 && solve.getExpressionType () != 2)) {
 							Expression err = new Expression ();
 							err.setErrorMessage ("Undefined variables entered on RIGHT HAND SIDE are UNDEFINED.");
 							theExpressionList.Add (err);
+						} else {
+							ExpressionPrinter ex = new ExpressionPrinter (getExpression (lhs));
+							ex.Printer ();
 						}
+
 					} else {
 						Expression n = new Expression (sol.getSolution ());
 						n.setTag (lhs);
@@ -613,7 +614,7 @@ namespace MatrixSpace
 						else if (n.getExpressionType () == 3)
 							n.getNumberExpression ().setTag (lhs);
 						theExpressionList.Add (n);
-						Console.WriteLine ("SOLVED!!!");
+						Console.WriteLine ("SOLVED!!! A new variable assigned.");
 					}
 				}
 			
@@ -906,7 +907,7 @@ namespace MatrixSpace
 								}     // end if variable on lhs is not found
 							} else {     //else if rhs if not found
 								Expression err = new Expression ();
-								err.setErrorMessage ("The variable \"" + x.resultRHS + "\" was not found. Invalid expression.");
+								err.setErrorMessage ("The variable was not found. Invalid expression.");
 								theExpressionList.Add (err);
 							}
 						} else {       // when all it is totaly ambigous to know what the hell is being given.

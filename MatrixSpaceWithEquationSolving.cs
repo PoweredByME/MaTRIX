@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-
 namespace MatrixSpace
 {
 	public class Matrix  //matrix class starts
@@ -88,12 +87,15 @@ namespace MatrixSpace
 		public double  getElement(int row, int col){return theMatrix [row-1, col-1];}
 		public double[,] getMatrixArray(){return theMatrix;}
 		public void setTag(string theMatTag) {tag = theMatTag;}
+
 		public void setElement(double number, int rows, int col){theMatrix [rows-1, col-1] = number;}
 		static public Matrix operator+(Matrix lhs, Matrix rhs){return staticOperations.addMatrix (lhs, rhs);}
 		static public Matrix operator-(Matrix lhs, Matrix rhs){return staticOperations.subtractMatrix (lhs, rhs);}
 		static public Matrix operator*(Matrix lhs, Matrix rhs){return staticOperations.multiplyMatrix (lhs, rhs);}
 		static public Matrix operator*(Matrix lhs, double num){return staticOperations.mConst (lhs, num);}
 		static public Matrix operator*(double num, Matrix rhs){return staticOperations.mConst (rhs, num);}
+		static public Matrix operator/(Matrix lhs, double num){return staticOperations.mDivide (lhs, num);}
+
 
 	}      //the basic matrix class ends
 
@@ -136,6 +138,20 @@ namespace MatrixSpace
 
 	class OperationsClass     //start operations class
 	{
+
+		public Matrix mDivide(Matrix mat, double num){
+			int r = mat.getRows ();
+			int c = mat.getColumns ();
+			double[,] m = mat.getMatrixArray ();
+			for (int c1 = 0; c1 < r; c1++) {
+				for (int c2 = 0; c2 < c; c2++) {
+					m [c1, c2] /= num;
+				}
+			}
+			Matrix ans = new Matrix (mat.getTag (), m, r, c);
+			return ans;
+		}
+
 		public Matrix mConst(Matrix mat, double num)
 		{
 			int r = mat.getRows ();
@@ -542,9 +558,10 @@ namespace MatrixSpace
 			a.resultLHS = a.resultLHS.Trim ();
 			a.resultRHS = a.resultRHS.Trim ();
 			if (!string.IsNullOrWhiteSpace(a.resultLHS) && !string.IsNullOrWhiteSpace(a.resultRHS)) {
-				if (ifContain(expression, "=") && (ifContain(expression, "+")||ifContain(expression, "-")||ifContain(expression, "*"))) {
+				if (ifContain(expression, "=") && (ifContain(expression, "+")||ifContain(expression, "-")||ifContain(expression, "*") || ifContain(expression,"/"))) {
 					ProcessEquation (a.resultLHS, a.resultRHS);
 				} else
+					
 					Process ();
 			} else
 				Process ();
@@ -727,6 +744,13 @@ namespace MatrixSpace
 
 			else if (isNumeric (expression)) { // this checks if the expression is a number and assigns an approprate class to it.
 				Number num = new Number();
+				while (true) {
+					string nn = "n" + SNACount;
+					if (!theExpressionList.Contains (getExpression (nn))) {
+						break;
+					}
+					SNACount++;
+				}
 				num.setTag ("n" + SNACount);
 				SNACount++;
 				num.setNumber (double.Parse (expression));
@@ -760,42 +784,41 @@ namespace MatrixSpace
 					Counting += "*";   //add another option in the counting class global variable. 
 					string CommandString = "";
 					string ParameterString = "";
+					bool sell = false;
 					while(dumyExpCount < dumyExp.Length)   //seperation of the command string and parameter string.
 					{
 						endC = dumyExpArray[dumyExpCount];   //assigning  a char one by one and chackning it.
-						if(ifContain(Alphabets, endC.ToString()))
+						if(ifContain(Alphabets, endC.ToString()) && !sell)
 						{
-							CommandString += endC;      
+							CommandString += endC;   
 						}
 						else if(ifContain(Counting+="()", endC.ToString()))
 						{
 							ParameterString+=endC;
+							sell = true;
 						}
 						dumyExpCount++;
 					}
-					if(CommandString == "IDENTITYMATRIX"|| CommandString=="IDENTITY")   //if a valid command string is given.
-					{ 
-						if(string.IsNullOrWhiteSpace(ParameterString)){   //but if the parameters are not entered
-							Expression error = new Expression();
-							error.setErrorMessage("No parameters given. Incomplete information.");
-							theExpressionList.Add(error);
-						}
-						else{
-							ParameterString = ParameterString.TrimEnd (new Char[] {')'});   //triming unwanted characters
-							ParameterString = ParameterString.TrimStart (new Char[] {'('});
+					if (CommandString == "IDENTITYMATRIX" || CommandString == "IDENTITY") {   //if a valid command string is given.
+						if (string.IsNullOrWhiteSpace (ParameterString)) {   //but if the parameters are not entered
+							Expression error = new Expression ();
+							error.setErrorMessage ("No parameters given. Incomplete information.");
+							theExpressionList.Add (error);
+						} else {
+							ParameterString = ParameterString.TrimEnd (new Char[] { ')' });   //triming unwanted characters
+							ParameterString = ParameterString.TrimStart (new Char[] { '(' });
 
-							char[] pChar = ParameterString.ToCharArray();    // char array if the parameter string.
+							char[] pChar = ParameterString.ToCharArray ();    // char array if the parameter string.
 							string[] rc = new string[2];     //strings to take the parametes
-							int rows= 1, columns = 1;    
-							dumyExpCount=0;
+							int rows = 1, columns = 1;    
+							dumyExpCount = 0;
 							int selector = 0;
-							endC = pChar[dumyExpCount];
+							endC = pChar [dumyExpCount];
 							bool makeMatrix = true;
 							dumyExpCount = 0;
 							int cx0 = ParameterString.IndexOf ("*");
 							int cx1 = ((ParameterString.Length) - 1);
-							if (ifContain (ParameterString, "*") == true && cx0 != cx1 && ParameterString.IndexOf("*")!=0)
-							{    //if everything is right and matrix parameter extraction is good to goo i.e the string has a single amount.
+							if (ifContain (ParameterString, "*") == true && cx0 != cx1 && ParameterString.IndexOf ("*") != 0) {    //if everything is right and matrix parameter extraction is good to goo i.e the string has a single amount.
 								while (dumyExpCount < ParameterString.Length) {
 									endC = pChar [dumyExpCount];
 									rc [selector] += endC;
@@ -814,7 +837,7 @@ namespace MatrixSpace
 								}
 							} else {   // there is no * operator
 								if (isNumeric (ParameterString) == true) {
-									rc [0] = rc[1] = ParameterString;
+									rc [0] = rc [1] = ParameterString;
 								} else {
 									makeMatrix = false;
 									Expression error = new Expression ();
@@ -822,30 +845,116 @@ namespace MatrixSpace
 									theExpressionList.Add (error);
 								}
 							}
-							if (makeMatrix == true){  // if matrix making is good to gooooo
-								rc[0] = rc[0].TrimEnd(new Char[]{'*'});
-								rows = int.Parse(rc[0]);
-								columns = int.Parse(rc[1]);
-								if(rows == columns)   // of rows and columns are equal to eachother.
-								{
-									string id = "I"+IdentityCount.ToString();
+							if (makeMatrix == true) {  // if matrix making is good to gooooo
+								rc [0] = rc [0].TrimEnd (new Char[]{ '*' });
+								rows = int.Parse (rc [0]);
+								columns = int.Parse (rc [1]);
+								if (rows == columns) {   // of rows and columns are equal to eachother.
+									string id = "I" + IdentityCount.ToString ();
 									IdentityCount++;
-									Matrix Identity = new Matrix(rows, columns);
-									Identity.Identity();
-									Identity.setTag(id);
-									Expression m = new Expression();
-									m.setMatrix(Identity);
-									theExpressionList.Add(m);
-								}
-								else  // of this is not the case then do this.
-								{
-									Expression error = new Expression();
-									error.setErrorMessage("The number of ROWS and COLUMNS you entered are not EQUAL. Cannot make an Identity matrix");
-									theExpressionList.Add(error);
+									Matrix Identity = new Matrix (rows, columns);
+									Identity.Identity ();
+									Identity.setTag (id);
+									Expression m = new Expression ();
+									m.setMatrix (Identity);
+									theExpressionList.Add (m);
+								} else {  // of this is not the case then do this.
+									Expression error = new Expression ();
+									error.setErrorMessage ("The number of ROWS and COLUMNS you entered are not EQUAL. Cannot make an Identity matrix");
+									theExpressionList.Add (error);
 								}// end else for row==column
 							}//end if matrix make true
 						}  //end else if some parameters are given.
 					}    //end the commang string checking 
+					else if (CommandString == "DETERMINANT" || CommandString == "DET") {
+						if (ParameterString.Contains ("(") && ParameterString.Contains (")")) {
+							ParameterString = "";
+							for (int count = expression.IndexOf ('('); count < expression.Length; count++) {
+								ParameterString += expression [count];
+							}
+							string p = ParameterString.TrimEnd (new char[] {')'});
+							p = p.TrimStart ("(".ToCharArray());
+							Expression tobe = getExpression (p);
+							if (theExpressionList.Contains (tobe)) {
+								if (tobe.getExpressionType () == 1) {
+									if (tobe.getMatrix ().getRows () == tobe.getMatrix ().getColumns ()) {
+										Number det = new Number ();
+										double d = tobe.getMatrix ().determinant ();
+										while(true){
+											string nn = "det" + SDACount;
+											if (!theExpressionList.Contains (getExpression (nn))) {
+												break;
+											}
+											SDACount++;
+									}
+										det.setTag("det"+SDACount);
+										SDACount++;
+										det.setNumber (d);
+										Expression ddd = new Expression ();
+										ddd.setNumberExpression (det);
+										theExpressionList.Add (ddd);
+									} else {
+										Expression error = new Expression ();
+										error.setErrorMessage ("Determinant only exist for square matrices.");
+										theExpressionList.Add (error);
+									}
+								} else {
+									Expression error = new Expression ();
+									error.setErrorMessage ("The given parameter is not a matrix.");
+									theExpressionList.Add (error);
+								}
+							} else {
+								Expression error = new Expression ();
+								error.setErrorMessage ("Undefined Parameter");
+								theExpressionList.Add (error);
+							}
+						} else {
+							Expression error = new Expression ();
+							error.setErrorMessage ("No paramter was given.");
+							theExpressionList.Add (error);
+						}
+					}
+					else if (CommandString=="INVERSE" || CommandString == "INV"){
+						ParameterString = "";
+						for (int count = expression.IndexOf ("("); count < expression.Length; count++) {
+							ParameterString += expression [count];
+						}
+						string p = ParameterString.TrimStart (new char[]{ '(' });
+						p = p.TrimEnd (")".ToCharArray ());
+						Expression tobe = getExpression (p);
+						if (tobe.getExpressionType () == 1) {
+							if (tobe.getMatrix ().getRows () == tobe.getMatrix ().getColumns ()) {
+								if (tobe.getMatrix ().determinant () != 0) {
+									Matrix ans = tobe.getMatrix ().getAdjoint();
+									ans = ans / tobe.getMatrix ().determinant ();
+									while (true) {
+										string nnn = "i"+ p + SAACount;
+										if (!theExpressionList.Contains (getExpression (nnn)))
+											break;
+										SAACount++;
+									}
+									ans.setTag ("i" +p+ SAACount);
+									SAACount++;
+									Expression xxx = new Expression ();
+									xxx.setMatrix (ans);
+									theExpressionList.Add (xxx);
+
+								} else {
+									Expression error = new Expression ();
+									error.setErrorMessage ("The matrix is SINGULAR (determinant = 0). INVERSE DOES NOT EXIST.");
+									theExpressionList.Add (error);
+								}
+							} else {
+								Expression error = new Expression ();
+								error.setErrorMessage ("Inverse only exist for square matrices.");
+								theExpressionList.Add (error);
+								}
+						} else {
+							Expression error = new Expression ();
+							error.setErrorMessage ("Invalid Parameter.");
+							theExpressionList.Add (error);
+							}
+					}
 					else{      //when every thing is not understandable and no command and no matrix making is possible then.  logic for assignment operator.
 						theTwoResultStrings x = SplitString (expression, '=');  //spliting the string on the basis of assignment operators.
 						x.resultLHS = x.resultLHS.Trim ();
@@ -959,6 +1068,10 @@ namespace MatrixSpace
 			}
 			return x1;
 		}
+
+		static int SDACount = 0;
+		static int SAACount = 0;
+
 		private bool ifContain(string myString, string toFind)
 		{
 			bool decision = false ;
@@ -1057,6 +1170,13 @@ namespace MatrixSpace
 			theMatrix.Zero ();   //make the matrix zero
 			if(string.IsNullOrWhiteSpace(theMatrixTag))    //if some variable name is not given.
 			{
+				while (true) {
+					string ofTag = "M"+SACount.ToString();
+					if (!theExpressionList.Contains (getExpression (ofTag))) {
+						break;
+					}
+					SACount++;
+				}
 				theMatrixTag = "M"+SACount.ToString();
 				SACount++;
 			}

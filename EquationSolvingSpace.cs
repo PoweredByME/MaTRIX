@@ -155,7 +155,7 @@ namespace EquationSolvingSpace
 			bool proceed = true;
 			string dumy = "";
 			foreach (char x in expression) {
-				if (x == '+' || x == '-' || x == '/' || x == '*') {
+				if (x == '+' || x == '-' || x == '/' || x == '*' || x == '(' || x == ')') {
 					if (!string.IsNullOrWhiteSpace (dumy)) {
 						dumy = dumy.Trim ();
 						eBatch.Add (dumy);
@@ -178,8 +178,11 @@ namespace EquationSolvingSpace
 				}
 			} else
 				 proceed = false;
+		//	foreach (string x in eBatch)
+		//		Console.WriteLine (x);
 			return proceed;
 		}
+
 
 		private bool eBatchManager()
 		{

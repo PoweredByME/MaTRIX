@@ -75,6 +75,8 @@ namespace MatrixSpace
 			}
 		}
 
+		public double this [int aRow, int aCol] => theMatrix[aRow, aCol];
+
 		public void setMatrixArray(double [,] mat){theMatrix = mat;}
 		public string getTag(){return tag;}
 		public Matrix getAdjoint(){return theOperations.getAdjoint (this);}
@@ -85,7 +87,7 @@ namespace MatrixSpace
 		public int getRows(){return mRows;}
 		public int getColumns(){return mCols;}
 		public double  getElement(int row, int col){return theMatrix [row-1, col-1];}
-		public double[,] getMatrixArray(){return theMatrix;}
+		public double[,] getMatrixArray()=>theMatrix;
 		public void setTag(string theMatTag) {tag = theMatTag;}
 
 		public void setElement(double number, int rows, int col){theMatrix [rows-1, col-1] = number;}
@@ -1364,5 +1366,4 @@ namespace MatrixSpace
 
 
 }
-
 

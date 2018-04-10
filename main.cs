@@ -6,6 +6,7 @@ namespace MLFA
 	{
 		public static void Main (string[] args)
 		{
+			Console.WriteLine("I don't know what to do");
 			string m = "";
 			StringEnumerator a = new StringEnumerator(m);
 			while (m!="end"){
